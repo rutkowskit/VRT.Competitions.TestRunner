@@ -1,0 +1,90 @@
+﻿<Window x:Class="VRT.Competitions.TestRunner.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:wpf="clr-namespace:VRT.Competitions.TestRunner.Wpf" 
+        xmlns:material="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:controls="clr-namespace:VRT.Competitions.TestRunner.Wpf.Controls"
+        d:DataContext="{d:DesignInstance Type=wpf:MainWindowViewModel}"
+        mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen"
+        Title="Competitive Programming - Test Runner" Height="550" Width="900">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+        </Grid.RowDefinitions>
+        <GroupBox Header="Options">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition></RowDefinition>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox 
+                        Text="{Binding ExecutableFilePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Margin="0 0 10 5"
+                        Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                        material:HintAssist.Hint="Executable file path"
+                        material:TextFieldAssist.HasClearButton="True">
+                    </TextBox>
+                    <controls:ImageButton IconKind="File" Grid.Row="0" Grid.Column="1" Click="OnBrowseExeFileButtonClick" 
+                                          ToolTip="Browse executable to test"/>
+                    <TextBox 
+                        Grid.Row="1"
+                        Text="{Binding TestsDirectoryPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Margin="0 0 10 15"
+                        Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                        material:HintAssist.Hint="Directory with test input and output files"
+                        material:TextFieldAssist.HasClearButton="True"
+                        material:HintAssist.HelperText="Subdirectories will also be scanned">
+                    </TextBox>
+                    <controls:ImageButton IconKind="Folder" Grid.Row="1" Grid.Column="1" Click="OnBrowseTestFilesFolderButtonClick" 
+                                          ToolTip="Browse folder with tests" />
+                </Grid>
+                <StackPanel Grid.Row="1" Orientation="Horizontal">
+                    <Button Command="{Binding StartCommand}" Content="Start" Margin="5" />
+                    <Button Command="{Binding StartCancelCommand}" Content="Cancel" />
+                </StackPanel>
+            </Grid>
+        </GroupBox>
+        <DataGrid Grid.Row="1" 
+                  ItemsSource="{Binding TestTasks}" 
+                  IsReadOnly="True" 
+                  CanUserAddRows="false" 
+                  CanUserDeleteRows="False"
+                  CanUserResizeColumns="False"
+                  AutoGenerateColumns="False"
+                  EnableRowVirtualization="True"
+                  SelectedItem="{Binding CurrentTestTask}"
+                  SelectionChanged="OnItemSelected"
+                  CanUserSortColumns="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Name" Binding="{Binding Title,Mode=OneTime}" />
+                <DataGridTextColumn Header="State" Binding="{Binding State.Name,Mode=OneWay}"/>
+                <DataGridCheckBoxColumn Header="Is OK" Binding="{Binding IsOk,Mode=OneWay}" />
+                <DataGridTextColumn Header="Run Time" Binding="{Binding RunTime,Mode=OneWay}"/>
+                <DataGridTextColumn Header="Message" Binding="{Binding Message,Mode=OneWay}" />
+            </DataGrid.Columns>
+        </DataGrid>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto"/>                
+            </Grid.ColumnDefinitions>
+            <ProgressBar Value="{Binding Progress, Mode=OneWay}" Height="10" />
+            <TextBlock Grid.Column="1" Text="{Binding ProgressText, Mode=OneWay}" />
+        </Grid>
+        
+    </Grid>
+</Window>
