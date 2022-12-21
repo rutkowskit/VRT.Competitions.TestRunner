@@ -1,19 +1,18 @@
-﻿using System.IO;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using VRT.Competitions.TestRunner.Application.Abstractions;
 
-namespace VRT.Competitions.TestRunner.Wpf.TestTasks.States;
+namespace VRT.Competitions.TestRunner.Application.TestTasks.States;
 
 public sealed partial class CompletedTestTaskState : BaseTestTaskState
 {
     public CompletedTestTaskState(ITestTaskContext context,
         ShellCommandOutput shellOutput) : base(context)
     {
-        Context.RunTime = shellOutput.RunTime;
+        RunTime = shellOutput.RunTime;
         var hasExpectedOutput = HasExpectedOutput(shellOutput);
-        Context.IsOk = hasExpectedOutput;
-        Context.Message = hasExpectedOutput ? "" : "Output does not match";
-        Context.RunTime = shellOutput.RunTime;
+        IsOk = hasExpectedOutput;
+        Message = hasExpectedOutput ? "" : "Output does not match";
+        RunTime = shellOutput.RunTime;
     }
     public override string Name => "Completed";
 

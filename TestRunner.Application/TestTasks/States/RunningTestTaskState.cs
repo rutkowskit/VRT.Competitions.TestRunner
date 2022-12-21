@@ -1,7 +1,8 @@
 ﻿using CSharpFunctionalExtensions;
 using VRT.Competitions.TestRunner.Application.Abstractions;
+using VRT.Competitions.TestRunner.Application.TestTasks;
 
-namespace VRT.Competitions.TestRunner.Wpf.TestTasks.States;
+namespace VRT.Competitions.TestRunner.Application.TestTasks.States;
 
 public sealed class RunningTestTaskState : BaseTestTaskState
 {

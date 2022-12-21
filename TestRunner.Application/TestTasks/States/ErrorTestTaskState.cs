@@ -1,10 +1,10 @@
-﻿namespace VRT.Competitions.TestRunner.Wpf.TestTasks.States;
+﻿namespace VRT.Competitions.TestRunner.Application.TestTasks.States;
 
 public sealed class ErrorTestTaskState : BaseTestTaskState
 {
     public ErrorTestTaskState(ITestTaskContext context, string errorMessage) : base(context)
-    {        
-        Context.Message = errorMessage;
+    {
+        Message = errorMessage;        
     }
     public override string Name => "Error";
 

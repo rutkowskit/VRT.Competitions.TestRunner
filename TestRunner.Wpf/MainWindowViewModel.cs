@@ -2,8 +2,12 @@
 using CommunityToolkit.Mvvm.Input;
 using CSharpFunctionalExtensions;
 using CSharpFunctionalExtensions.ValueTasks;
+using MediatR;
 using System.IO;
 using VRT.Competitions.TestRunner.Application.Abstractions;
+using VRT.Competitions.TestRunner.Application.TestTasks;
+using VRT.Competitions.TestRunner.Application.TestTasks.Commands.RunTestTasks;
+using VRT.Competitions.TestRunner.Application.TestTasks.Queries.GetTestTasks;
 using VRT.Competitions.TestRunner.Wpf.TestTasks;
 
 namespace VRT.Competitions.TestRunner.Wpf;
@@ -12,11 +16,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
 {
     private readonly IStateService _stateService;
     private readonly IShellService _shellService;
+    private readonly IMediator _mediator;
 
     private record MainWindowViewModelState(string? ExecutableFilePath, string? TestsDirectoryPath);
 
-    public MainWindowViewModel(IStateService stateService, IShellService shellService)
+    public MainWindowViewModel(IStateService stateService, IShellService shellService,
+        IMediator mediator)
     {
+        _mediator = mediator;
         _stateService = stateService;
         _shellService = shellService;
         _ = LoadState();
@@ -33,7 +40,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private IReadOnlyCollection<TestTaskViewModel>? _testTasks;
 
     [ObservableProperty]
-    private TestTaskViewModel? _currentTestTask;
+    private ITestTaskWithState? _currentTestTask;
 
     [ObservableProperty]
     private int _progress;
@@ -47,23 +54,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         TestTasks = Array.Empty<TestTaskViewModel>();
         Progress = 0;
-        TestTasks = GetTestTasks();
-        int cnt = 0;
-        int total = TestTasks.Count;
         await SaveState();
-        foreach (var t in TestTasks)
-        {
-            CurrentTestTask = t;
-            if (cancellationToken.IsCancellationRequested) break;
-            await t.StartAsync(cancellationToken);
-            cnt++;
-            UpdateProgress(cnt, total);
-            
-        }
+        TestTasks = await GetTestTasks(cancellationToken);
+        var command = new RunTestTasksCommand(TestTasks)
+        { 
+            OnProgressCallback = UpdateProgress,
+            OnBeforeRunTestCallback = t => CurrentTestTask = t,
+        };
+        await _mediator.Send(command, cancellationToken);
     }
-    private void UpdateProgress(int cnt, int total)
+    private void UpdateProgress((int cnt, int total) progress)
     {
-        if (cnt % 4 == 0)
+        var (cnt,total) = progress;
+        if (cnt % 4 == 0 || cnt == total)
         {
             Progress = Math.Min((int)(100f * cnt / total), 100);
             ProgressText = $"{cnt:######} of {total:######}";
@@ -77,37 +80,23 @@ public sealed partial class MainWindowViewModel : ObservableObject
             && Directory.Exists(TestsDirectoryPath);
     }
 
-    private IReadOnlyCollection<TestTaskViewModel> GetTestTasks()
+    private async Task<IReadOnlyCollection<TestTaskViewModel>> GetTestTasks(CancellationToken cancellationToken)
     {
-        var testDir = TestsDirectoryPath!;
-        var inFiles = Directory.GetFiles(testDir, "*.in", SearchOption.AllDirectories);
-        var outFiles = Directory.GetFiles(testDir, "*.out", SearchOption.AllDirectories);
-
-        var result = inFiles
-            .Join(outFiles, ToFileNameKey, ToFileNameKey, (inFile, outFile) => (inFile, outFile))
-            .Where(t => string.IsNullOrEmpty(t.inFile) is false)
-            .Distinct()
-            .Select(CreateTestTaskViewModelParams)
+        var query = new GetTestTasksQuery(ExecutableFilePath!, TestsDirectoryPath!);
+        var result = await _mediator.Send(query, cancellationToken)
+            .Map(ToTestTaskViewModel)
+            .Compensate(_ => Array.Empty<TestTaskViewModel>());
+        return result.Value;        
+    }
+    private IReadOnlyCollection<TestTaskViewModel> ToTestTaskViewModel(IEnumerable<TestTaskParams> testParams)
+    {
+        var result = testParams
             .Select(t => new TestTaskViewModel(t))
-            .OrderBy(o => o.Priority)
+            .OrderBy(o => o.TestParams.Priority)
             .ThenBy(o => o.Title)
             .ToArray();
-
         return result;
     }
-
-    private TestTaskViewModelParams CreateTestTaskViewModelParams((string inFile, string outFile) files)
-    {
-        return new TestTaskViewModelParams()
-        {
-            ExecutableFilePath = ExecutableFilePath!,
-            InputFilePath = files.inFile,
-            OutputFilePath = files.outFile,
-            Shell = _shellService
-        };
-    }
-
-    private string ToFileNameKey(string fullFilePath) => Path.GetFileNameWithoutExtension(fullFilePath);
 
     private async Task SaveState()
     {

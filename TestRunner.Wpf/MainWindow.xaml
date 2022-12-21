@@ -72,9 +72,9 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Name" Binding="{Binding Title,Mode=OneTime}" />
                 <DataGridTextColumn Header="State" Binding="{Binding State.Name,Mode=OneWay}"/>
-                <DataGridCheckBoxColumn Header="Is OK" Binding="{Binding IsOk,Mode=OneWay}" />
-                <DataGridTextColumn Header="Run Time" Binding="{Binding RunTime,Mode=OneWay}"/>
-                <DataGridTextColumn Header="Message" Binding="{Binding Message,Mode=OneWay}" />
+                <DataGridCheckBoxColumn Header="Is OK" Binding="{Binding State.IsOk,Mode=OneWay}" />
+                <DataGridTextColumn Header="Run Time" Binding="{Binding State.RunTime,Mode=OneWay}"/>
+                <DataGridTextColumn Header="Message" Binding="{Binding State.Message,Mode=OneWay}" />
             </DataGrid.Columns>
         </DataGrid>
         <Grid Grid.Row="2">
